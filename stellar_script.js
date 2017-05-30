@@ -1,4 +1,4 @@
-var StellarBit = require('./stellarBit')
+//var StellarBit = require('./stellarBit')
 var StellarSdk = require('stellar-sdk')
 
 var testPubOne    = 'GBKFLN553AUG32BDW5UHYQWEQRD3U5QZPQA5IWNXZ62453VLREWBXAE5'
@@ -23,7 +23,8 @@ var coinsPub = "GCKX3XVTPVNFXQWLQCIBZX6OOPOIUT7FOAZVNOFCNEIXEZFRFSPNZKZT"
 //return StellarBit.sendXLM({ senderId: livePub, destinationId: coinsPub, pair: pair})
 
 //var pair = StellarSdk.Keypair.fromSecret(secret)
-//var pair = StellarSdk.Keypair.random()
+var pair = StellarSdk.Keypair.random()
+console.log(pair.secret())
 //var command = process.argv[2]
 //return StellarBit.createAccount();
 //

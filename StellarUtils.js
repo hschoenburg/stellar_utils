@@ -3,7 +3,7 @@ var Promise = require('bluebird');
 var StellarSdk = require('stellar-sdk');
 StellarSdk.Network.usePublicNetwork();
 
-var server = new StellarSdk.Server('https://horizon.stellar.org');
+var server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
 
 exports.showBalance = function(pub_key) {
   server.loadAccount(pub_key).then(function(account) {
