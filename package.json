@@ -9,7 +9,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "eventsource": "^1.0.1",
+    "bluebird": "^3.5.0",
+    "dotenv": "^4.0.0",
+    "eventsource": "^1.0.2",
+    "request": "^2.81.0",
+    "request-promise": "^4.2.1",
     "stellar-sdk": "^0.7.3"
   }
 }
