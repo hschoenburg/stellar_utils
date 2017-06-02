@@ -1,9 +1,10 @@
 var request = require('request');
 var Promise = require('bluebird');
 var StellarSdk = require('stellar-sdk');
+require('dotenv').config();
 StellarSdk.Network.useTestNetwork();
 
-var server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
+var server = new StellarSdk.Server('https://horizon.stellar.org');
 
 
 exports.balancesForKey = function(pub_key) {
@@ -21,47 +22,80 @@ exports.resolveFederatedAddress = function(addr) {
   // then need to figure out how to send PHP to the coins address
 } 
 
+exports.createAccount = function(opts) {
+
+  return new Promise(function(fulfill, reject) {
+
+    server.loadAccount(opts.funder.publicKey())
+      .then(function(funder) {
+        var txn = new StellarSdk.TransactionBuilder(funder)
+          .addOperation(StellarSdk.Operation.createAccount({
+            destination: opts.receiver.publicKey(),
+            startingBalance: opts.balance
+          }))
+          .build()
+
+        txn.sign(opts.funder)
+        return server.submitTransaction(txn)
+      }).then(function(result) {
+        console.log('Account Created')
+        fulfill(result);
+      })
+      .catch(function(error) {
+        throw error;
+      })
+  })
+}
+
+
 exports.sendPayment = function(opts) {
 
 	return new Promise(function(fulfill, reject) {
 
-  	server.loadAccount(opts.sender.publicKey())
+    server.loadAccount(opts.receiver.publicKey())
+
+    .then(function(receiver) {
+      return server.loadAccount(opts.sender.publicKey())
+    })
 
 		.then(function(sender) {
+      //console.log(opts);
 			var transaction = new StellarSdk.TransactionBuilder(sender)
 				.addOperation(StellarSdk.Operation.payment({
 					destination: opts.receiver.publicKey(),
-					asset: opts.asset,
+					asset: StellarSdk.Asset.native(),
 					amount: opts.amount
 				}))
 				.build();
 			transaction.sign(opts.sender)
 			return server.submitTransaction(transaction);
 		}).then(function(result) {
+      console.log('Sucessful Submission?')
 			fulfill(result);
 		})
 		.catch(function(error) {
+      console.log("^^^^^^^^^^^^^^^  ERROR ^^^^^^^^^^^^^^^^^")
+      console.log(error.extras.result_codes.operations)
 			reject(error);
 		});
 	})
 }
 
 
-
-exports.createTrustLine = function(asset, receiver_keys) {
+exports.createTrustLine = function(opts) {
 	return new Promise(function(fulfill, reject) {
 // First, the receiving account must trust the asset
-	server.loadAccount(receiver_keys.publicKey())
+	server.loadAccount(opts.buyer.publicKey())
   .then(function(receiver) {
     var transaction = new StellarSdk.TransactionBuilder(receiver)
       // The `changeTrust` operation creates (or alters) a trustline
       // The `limit` parameter below is optional
       .addOperation(StellarSdk.Operation.changeTrust({
-        asset: asset,
-        limit: '9999'
+        asset: opts.asset,
+        limit: opts.limit
       }))
       .build();
-    transaction.sign(receiver_keys)
+    transaction.sign(opts.buyer)
     return server.submitTransaction(transaction)
 		}).then(function(result) {
 			fulfill(result);
@@ -142,24 +176,39 @@ exports.sendXLM = function(opts) {
 
 exports.XLMForAsset = function(buyer_keys, asset) {
 
+  return new Promise(function(fulfill, reject) {
+
   	server.loadAccount(buyer_keys.publicKey())
 
 		.then(function(account) {
 			var transaction = new StellarSdk.TransactionBuilder(account)
+
 				.addOperation(StellarSdk.Operation.manageOffer({
+
           selling: StellarSdk.Asset.native(),
           buying: asset,
-          amount: '183'
-          price: '1.83'
+          amount: '100',
+          price: '0.10'
 				}))
 				.build();
 			transaction.sign(buyer_keys)
-			return server.submitTransaction(transaction);
-		}).then(function(result) {
-      console.log(result);
+			fulfill(server.submitTransaction(transaction))
     })
-    .catch(function(err) {
-      throw err;
-    })
+    .catch(function(err) { console.log(err); reject(err) })
+  })
 }
+
+
+exports.setKeys = function() {
+  return new Promise(function(fulfill, reject) {
+    var issuer = StellarSdk.Keypair.fromSecret(process.env.ISSUER_SECRET)
+    var buyer  = StellarSdk.Keypair.fromSecret(process.env.BUYER_SECRET)
+    var base   = StellarSdk.Keypair.fromSecret(process.env.BASE_SECRET)
+    var app    = StellarSdk.Keypair.fromSecret(process.env.APP_SECRET)
+    var live   = StellarSdk.Keypair.fromSecret(process.env.LIVE_SECRET)
+  keys = { issuer: issuer, buyer: buyer, base: base, app: app, live: live }
+  fulfill(keys)
+  })
+}
+
 

@@ -1,50 +1,47 @@
-
 // MODULES
-var fs = require('fs')
-var path = require('path')
 var StellarSdk = require('stellar-sdk');
 var Promise = require('bluebird')
 require('dotenv').config()
-var request = require('request-promise')
 
 var utils = require('./utils')
 
 // SETUP
-StellarSdk.Network.useTestNetwork();
+StellarSdk.Network.usePublicNetwork();
 
 // GLOBAL VARS
 
-var keys
-var server = new StellarSdk.Server('https://horizon-testnet.stellar.org');
+var server = new StellarSdk.Server('https://horizon.stellar.org');
 
+var phpAsset = new StellarSdk.Asset('PHP', 'GBUQWP3BOUZX34TOND2QV7QQ7K7VJTG6VSE7WMLBTMDJLLAW7YKGU6EP')
 
-// ACTUAL COMMANDS
+var eurtAsset = new StellarSdk.Asset('EURT','GAP5LETOV6YIE62YAM56STDANPRDO7ZFDBGSNHJQIYGGKSMOZAHOOS2S')
 
-/*
-	Next Steps
-	1. ManageOffer for BIT from issuer account
-	2. Query orderbook to get price data
+var CoinsKey = 'GBUQWP3BOUZX34TOND2QV7QQ7K7VJTG6VSE7WMLBTMDJLLAW7YKGU6EP'
 
-	2. Create crossing offer for BIT from buyer account
-*/
-	
+var HansKey = 'GD244U35EWNXFB5KVQRVJYZKQYQIOZ5HQZTXXXHUCXHREYMI7DM3RAJK'
 
-setKeys(function() {
+utils.setKeys().then(function(keys) {
 
-    var BitAsset = new StellarSdk.Asset('BIT', keys.issuer.publicKey())
+  utils.balancesForKey(keys.base.publicKey());
+})
 
-  utils.XLMForAsset(keys.buyer, BitAsset)
+  //utils.createAccount({funder: keys.live, receiver: keys.base, balance: '30' })
+
+  //utils.createTrustLine({ asset: phpAsset, buyer: keys.base, limit: '1000' })
   //
-  // current buyer BIT balance = 542.83333
-  // current buyer XLM balance = 9742.999
+  //NExt up!  Federation and Compliance!
   //
-  //
-  // Goal, buy 100 BIT
-  //
-  //
-  //  standing prices 0.54545
+  //https://www.stellar.org/developers/guides/compliance-protocol.html
 
-  //utils.balancesForKey(keys.buyer.publicKey());
+  // send XLM from Live to Base
+  //utils.sendPayment({ sender: keys.live, receiver: keys.base,  asset: StellarSdk.Asset.native(), amount: '1000'})
+    
+  //utils.XLMForAsset(keys.base, phpAsset)
+  //.then(function(result) { console.log(result); })
+
+  //.catch(function(err) { console.log(err.extras.result_codes.operations); throw(err) })
+
+
   /*
 
   	server.loadAccount(keys.issuer.publicKey())
@@ -68,25 +65,10 @@ setKeys(function() {
     })
     */
 
-  //issuer creates offer of BIT/XLM
-  //buyer creates offer of XLM/BIT
-
-
   //utils.sendPayment({sender: keys.issuer, receiver: keys.buyer, asset: BitAsset, amount: '10'})
 	//utils.createTrustLine(BitAsset, keys.buyer)
 
-})
 // UTILITY FUNCTIONS
-
-function setKeys(callback) {
-  var issuer = StellarSdk.Keypair.fromSecret(process.env.ISSUER_SECRET)
-  var buyer  = StellarSdk.Keypair.fromSecret(process.env.BUYER_SECRET)
-  var base   = StellarSdk.Keypair.fromSecret(process.env.BASE_SECRET)
-  var app         = StellarSdk.Keypair.fromSecret(process.env.APP_SECRET)
-  keys = { issuer: issuer, buyer: buyer, base: base, app: app }
-  callback();
-}
-
 
 
 
